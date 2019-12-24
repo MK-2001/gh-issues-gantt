@@ -1,7 +1,6 @@
-var request = require('request');
+var request = require("request");
 
 module.exports = function(config) {
-
    var baseUrl = "https://api.github.com/repos/" + config.repo;
 
    // Factorize auth and headers setting
@@ -13,93 +12,101 @@ module.exports = function(config) {
       // github's API requires that we use specify a userAgent
       // (see: http://developer.github.com/v3/#user-agent-required)
       headers: {
-         'User-Agent': "gh-issues-gantt/0.0.1" // should match package.json
+         "User-Agent": "gh-issues-gantt/0.0.1" // should match package.json
       }
    });
 
    var memo = {
       issues: {
          value: [],
-         status: 'stale' // in ["fresh", "refreshing", "stale"]
+         status: "stale" // in ["fresh", "refreshing", "stale"]
       },
       milestones: {
          value: [],
-         status: 'stale'
+         status: "stale"
       }
    };
 
-   function fetchIssues (cb, url, tmpIssues) {
-      if (memo.issues.status === 'stale') {
-         memo.issues.status = 'refreshing';
+   function fetchIssues(cb, url, tmpIssues) {
+      if (memo.issues.status === "stale") {
+         memo.issues.status = "refreshing";
          refreshIssues.call(this, cb, url, tmpIssues);
       } else {
          cb(null, memo.issues.value, memo.issues.status);
       }
    }
 
-   function fetchMilestones (cb) {
-      if (memo.milestones.status === 'stale') {
-         memo.milestones.status = 'refreshing';
+   function fetchMilestones(cb) {
+      if (memo.milestones.status === "stale") {
+         memo.milestones.status = "refreshing";
          refreshMilestones.call(this, cb);
       } else {
          cb(null, memo.milestones.value, memo.milestones.status);
       }
    }
 
-   function refreshIssues (cb, url, tmpIssues) {
-
+   function refreshIssues(cb, url, tmpIssues) {
       url = url || baseUrl + "/issues?per_page=100&status=open&direction=asc";
 
       console.log("GET " + url);
 
-      baseRequest.get({
-         url: url,
-      }, function (error, response, body) {
+      baseRequest.get(
+         {
+            url: url
+         },
+         function(error, response, body) {
+            if (error) {
+               console.log("HTTP error, status code is:", response.statusCode);
+               return;
+            }
 
-         var issues = (tmpIssues ? tmpIssues : []).concat(JSON.parse(body));
+            var issues = (tmpIssues ? tmpIssues : []).concat(JSON.parse(body));
 
-         var links = {};
-         //check if there is a link, stops a crash when number of issues <=100
-         if (response.headers.link != null) {
-            response.headers.link.split(', ').forEach(function(headLink){
-               var s = headLink.split('; ');
-               links[s[1]] = s[0].substr(1, s[0].length-2);
-            });
+            var links = {};
+            //check if there is a link, stops a crash when number of issues <=100
+            if (response.headers.link != null) {
+               response.headers.link.split(", ").forEach(function(headLink) {
+                  var s = headLink.split("; ");
+                  links[s[1]] = s[0].substr(1, s[0].length - 2);
+               });
+            }
+
+            if (links['rel="next"']) {
+               refreshIssues(cb, links['rel="next"'], issues);
+            } else {
+               memo.issues.value = issues;
+               memo.issues.status = "fresh";
+               cb(null, issues, memo.issues.status);
+            }
          }
-
-         if(links['rel="next"']) {
-            refreshIssues(cb, links['rel="next"'], issues);
-         }
-         else {
-            memo.issues.value  = issues;
-            memo.issues.status = "fresh";
-            cb(null, issues, memo.issues.status);
-         }
-
-      });
-
+      );
    }
 
-   function refreshMilestones (cb) {
-
+   function refreshMilestones(cb) {
       var url = baseUrl + "/milestones?per_page=100&status=open";
 
       console.log("GET " + url);
 
-      baseRequest.get({
-         url: url,
-      }, function (error, response, body) {
-         memo.milestones.value  = JSON.parse(body);
-         memo.milestones.status = "fresh";
-         cb(null, memo.milestones.value, memo.issues.status);
-      });
-
+      baseRequest.get(
+         {
+            url: url
+         },
+         function(error, response, body) {
+            if (error) {
+               console.log("HTTP error, status code is:", response.statusCode);
+               return;
+            }
+            memo.milestones.value = JSON.parse(body);
+            memo.milestones.status = "fresh";
+            cb(null, memo.milestones.value, memo.issues.status);
+         }
+      );
    }
 
-   function refresh (cb) {
+   function refresh(cb) {
       for (var key in memo) {
          if (memo.hasOwnProperty(key)) {
-            if (memo[key].status = "fresh") {
+            if ((memo[key].status = "fresh")) {
                memo[key].status = "stale";
             }
          }
@@ -117,18 +124,25 @@ module.exports = function(config) {
 
          console.log("PATCH " + url);
 
-         baseRequest.patch({
-            url: url,
-            json: {
-               "due_on": due_on
+         baseRequest.patch(
+            {
+               url: url,
+               json: {
+                  due_on: due_on
+               }
+            },
+            function(error, response, body) {
+               if (error) {
+                  console.log(
+                     "HTTP error, status code is:",
+                     response.statusCode
+                  );
+                  return;
+               }
+               console.log(body);
+               cb(null, null);
             }
-         }, function (error, response, body) {
-            console.log(body);
-            cb(null, null);
-         });
+         );
       }
-
    };
-
 };
-
