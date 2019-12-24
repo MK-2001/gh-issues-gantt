@@ -56,7 +56,7 @@ module.exports = function(config) {
          },
          function(error, response, body) {
             if (error) {
-               console.log("HTTP error, status code is:", response.statusCode);
+               console.log("HTTP error, error is:", error);
                return;
             }
 
@@ -93,7 +93,7 @@ module.exports = function(config) {
          },
          function(error, response, body) {
             if (error) {
-               console.log("HTTP error, status code is:", response.statusCode);
+               console.log("HTTP error, error is:", error);
                return;
             }
             memo.milestones.value = JSON.parse(body);
@@ -133,10 +133,7 @@ module.exports = function(config) {
             },
             function(error, response, body) {
                if (error) {
-                  console.log(
-                     "HTTP error, status code is:",
-                     response.statusCode
-                  );
+                  console.log("HTTP error, error is:", error);
                   return;
                }
                console.log(body);
