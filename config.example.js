@@ -4,6 +4,7 @@ module.exports = {
    },
 
    github: {
+      server: "https://api.github.com/",
       repo: 'user/repo',
       username: 'gh-username',
       password: 'gh-password'

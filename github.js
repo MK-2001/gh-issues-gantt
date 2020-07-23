@@ -1,7 +1,7 @@
 var request = require("request");
 
 module.exports = function(config) {
-   var baseUrl = "https://api.github.com/repos/" + config.repo;
+   var baseUrl = config.server + "/repos/" + config.repo;
 
    // Factorize auth and headers setting
    var baseRequest = request.defaults({

@@ -95,8 +95,8 @@ Milestone.prototype = {
    // assign tickets to each developper
    plan: function() {
 
-      this.minDate = (new Date(2018, 0, 1)).getTime();
-      this.maxDate = (new Date()).getTime();
+      this.minDate = (new Date(this.due_on)).getTime();
+      this.maxDate = (new Date(this.due_on)).getTime();
 
       this.issues.forEach(function(issue) {
          issue.plan();
@@ -354,7 +354,7 @@ var Planning = {
       // Dispatch issues in milestones
       issues.forEach(function(ghAttributes) {
          if(!ghAttributes.milestone) {
-            $('#msg').append("<p><a href='https://github.com/"+config.repo+"/issues/"+ghAttributes.number+"' target='new'>issue #"+ghAttributes.number+"</a> has no milestone !</p>");
+            $('#msg').append("<p><a href='https://"+config.server+"/"+config.repo+"/issues/"+ghAttributes.number+"' target='new'>issue #"+ghAttributes.number+"</a> has no milestone !</p>");
             return;
          }
          if(!!Milestone.byId[ghAttributes.milestone.id]) {
@@ -379,8 +379,8 @@ var Planning = {
       $(".gantt-milestone").gantt({
          source: milestonePlanning,
          navigate: "scroll",
-         scale: "days",
-         maxScale: "months",
+         scale: "months",
+         maxScale: "years",
          minScale: "days",
          itemsPerPage: 100,
          onItemClick: function(data) {
